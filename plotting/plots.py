@@ -123,48 +123,62 @@ def display_html(size=3, content="content"):
 
 # -----------------------------------------------------------------------------------------------------------------------
 # Visualize the count of missing values for each variable in a DataFrame using a bar chart.
-def plot_missing_info(data, bar_label_params = dict(), figsize = (10, 4)):
+import matplotlib.pyplot as plt
+import pandas as pd
+
+def plot_missing_info(df, bar_label_params=None, figsize=(10, 4), rotation=45):
     """
-    Visualize the count of missing values for each variable in a DataFrame using a bar chart.
+    Plot the count of missing values per column in a DataFrame.
 
     Parameters:
-        data (pd.DataFrame): Input DataFrame to analyze for missing values.
-        bar_label_params (dict, optional): Parameters for customizing bar labels (passed to ax.bar_label).
-        figsize (tuple, optional): Figure size for the plot.
+        df (pd.DataFrame): Input DataFrame to analyze.
+        bar_label_params (dict, optional): Parameters passed to ax.bar_label for customizing labels.
+        figsize (tuple, optional): Size of the plot figure. Default is (10, 4).
+        rotation (int, optional): Rotation angle for x-axis labels. Default is 45 degrees.
 
     Returns:
-        None. Displays a bar chart of missing value counts per variable.
+        tuple: (fig, ax) - Matplotlib Figure and Axes objects.
     """
-    # Compute missing value counts per column (assumes missing_info returns a DataFrame with 'count' column)
-    na_data = missing_info(data)
+    if bar_label_params is None:
+        bar_label_params = {}
 
-    # Create a bar plot of missing value counts
-    fig, ax = plt.subplots(1, 1, figsize=figsize)
-    bar = ax.bar(
-        range(len(na_data)),
-        height=na_data["count"].values,
+    # Calculate missing value counts per column
+    na_data = df.isnull().sum()
+    na_data = na_data[na_data > 0].sort_values(ascending=False)
+
+    if na_data.empty:
+        print("No missing data to plot.")
+        return None, None
+
+    # Create plot
+    fig, ax = plt.subplots(figsize=figsize)
+    bars = ax.bar(
+        na_data.index,
+        na_data.values,
         color="#1eba47",
         edgecolor="black",
-        tick_label=na_data.index.to_list(),
         alpha=0.7
     )
 
-    # Add value labels to each bar for clarity
-    ax.bar_label(bar, **bar_label_params)
+    # Add value labels
+    ax.bar_label(bars, **bar_label_params)
 
-    # Set axis labels and plot title
+    # Set labels and title
     ax.set(
         xlabel="Variable",
         ylabel="Count",
         title="Missing Data Counts per Variable"
     )
 
-    # Rotate x-axis labels for readability
-    rotate_xlabels(ax)
+    # Rotate x-axis labels
+    ax.set_xticklabels(na_data.index, rotation=rotation, ha='right')
 
-    # Optimize layout and display the plot
+    # Final layout
     plt.tight_layout()
     plt.show()
+
+    return fig, ax
+
 # plot_missing_info(df)
 
 
@@ -316,7 +330,38 @@ def cat_heat_map(data, mask=True, **kwargs):
 
 
 # -----------------------------------------------------------------------------------------------------------------------
-# Generate bivariate plots to visualize the relationship between a numeric and a categorical variable.
+# This will plot bar chart, Box plot and voilin plot.
+from IPython.display import HTML, display
+def display_html(size=3, content="content"):
+    """
+    Display a string as HTML header of specified size in Jupyter/IPython environments.
+
+    Parameters:
+        size (int, optional): Header size (1-6, default is 3).
+        content (str, optional): The content to display inside the header.
+
+    Returns:
+        None. Renders HTML in the notebook cell output.
+    """
+    display(HTML(f"<h{size}>{content}</h{size}>"))
+
+def rotate_xlabels(ax, angle=35):
+    """
+    Rotate the x-axis tick labels for better readability.
+
+    Parameters:
+        ax (matplotlib.axes.Axes): The axis object to modify.
+        angle (int or float, optional): The rotation angle for the labels (default is 35 degrees).
+
+    Returns:
+        None. Modifies the axis in-place.
+    """
+    ax.set_xticklabels(
+        ax.get_xticklabels(),
+        rotation=angle,
+        ha="right"
+    )
+
 def num_cat_bivar_plots(
     data,
     num_var,
@@ -476,8 +521,7 @@ def num_cat_bivar_plots(
 
     plt.tight_layout()
     plt.show()
-# num_cat_bivar_plots(df, "your_numeric_column", "your_categorical_column")
-
+# num_cat_bivar_plots(data = df, num_var = 'sweetness', cat_var = 'quality')
 
 
 # -----------------------------------------------------------------------------------------------------------------------
